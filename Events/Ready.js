@@ -1,18 +1,15 @@
 const { Client } = require("discord.js");
 const mongoose = require("mongoose");
-const { Database, CrossDB } = require("../config.json");
+const { Database, CrossDB, ArkShopPath } = require("../config.json");
 const mysql = require('mysql');
-const CrossChatDB = mysql.createConnection({
-    host: CrossDB.host,
-    user: CrossDB.user,
-    password: CrossDB.password,
-    database: CrossDB.database
-});
+
 module.exports = {
   name: "ready",
   once: true,
   execute(client) {
-    console.log(`Client is now logged in as ${client.user.username}`);
+    console.log('\x1b[34m%s\x1b[0m' ,'Made by Bart#8888');
+    console.log('\x1b[34m%s\x1b[0m' ,'Github: https://github.com/Bart435');
+    console.log('\x1b[32m%s\x1b[0m' ,'Connected to Discord');
 
     client.user.setPresence({ activities: [{ name: "https://magicark.co.uk/" }] });
     if (!Database) return;
@@ -20,13 +17,9 @@ module.exports = {
       useNewUrlParser: true,
       UseUnifiedTopology: true
     }).then(() => {
-      console.log("Connected to mongo")
+      console.log('\x1b[32m%s\x1b[0m' ,'Connected to MongoDB');
     }).catch((err) => {
       console.log(err)
     });
-    CrossChatDB.connect(function (err) {
-      if (err) throw err;
-      console.log("connected to mysql");
-  });
   },
 };

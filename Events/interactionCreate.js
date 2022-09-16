@@ -12,7 +12,7 @@ module.exports = {
       if (!command) return interaction.reply({ content: "This command is outdated!" });
 
       command.execute(interaction, client);
-      channel.send("```css\n"+ "[discord]" + ` ${interaction.user.username} - channel: ${interaction.channel.name} - Command: ${command.data.name}` + "```");
+      // channel.send("```css\n"+ "[discord]" + ` ${interaction.user.username} - channel: ${interaction.channel.name} - Command: ${command.data.name}` + "```"); 
     }
 
     if (interaction.type == InteractionType.ApplicationCommandAutocomplete) {

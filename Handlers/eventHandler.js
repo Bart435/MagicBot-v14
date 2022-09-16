@@ -1,6 +1,6 @@
-function loadEvents(client) {
+async function loadEvents(client) {
   const fs = require("fs");
-
+  const { setTimeout } = require("timers/promises");
     const files = fs
       .readdirSync(`./Events/`)
       .filter((file) => file.endsWith(".js"));
@@ -23,7 +23,8 @@ function loadEvents(client) {
       }
       continue;
     }
-  
+    await setTimeout(2000)
+    console.log('\x1b[32m%s\x1b[0m' ,'Events Loaded');
 }
 
 module.exports = { loadEvents };

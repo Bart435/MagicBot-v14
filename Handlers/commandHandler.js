@@ -1,8 +1,7 @@
-function loadCommands(client) {
+async function loadCommands(client) {
   const fs = require("fs");
-
+  const { setTimeout } = require("timers/promises");
   let commandsArray = [];
-  let developerArray = [];
 
   const commandsFolders = fs.readdirSync("./Commands");
   for (const folder of commandsFolders) {
@@ -14,17 +13,14 @@ function loadCommands(client) {
       const commandFile = require(`../Commands/${folder}/${file}`);
 
       client.commands.set(commandFile.data.name, commandFile);
-
-      if (commandFile.developer) developerArray.push(commandFile.data.toJSON());
-      else commandsArray.push(commandFile.data.toJSON());
+      commandsArray.push(commandFile.data.toJSON());
       continue;
     }
   }
   client.application.commands.set(commandsArray);
 
-  const developerGuild = client.guilds.cache.get(client.config.developerGuild);
-
-  developerGuild.commands.set(developerArray);
+  await setTimeout(2000)
+  console.log('\x1b[32m%s\x1b[0m' ,'Commands Loaded');
 }
 
 module.exports = { loadCommands };

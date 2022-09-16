@@ -5,15 +5,8 @@ const {
     EmbedBuilder,
 } = require("discord.js");
 const fetch = require('node-fetch');
-const { steamapi_key, CrossDB, VerifiedRoleID } = require('../../config.json');
-const mysql = require('mysql');
-const CrossChatDB = mysql.createConnection({
-    host: CrossDB.host,
-    user: CrossDB.user,
-    password: CrossDB.password,
-    database: CrossDB.database
-});
-
+const { steamapi_key, VerifiedRoleID } = require('../../config.json');
+const connection = require('../../db/crosschat');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("checksteam")
@@ -27,8 +20,17 @@ module.exports = {
     execute(interaction) { 
         const target = interaction.options.getMember("target");
         if (!target.roles.cache.has(VerifiedRoleID)) return interaction.reply({ content: "User did not link there accounts. This is required before to see this information.", ephemeral : true});
-        try {
-                CrossChatDB.query(`SELECT * FROM discordsteamlinks WHERE DiscordId = ${target.id}`, async function (err, result) {
+        function get_steamid(){
+            connection.query(`SELECT * FROM discordsteamlinks WHERE DiscordId = ${target.id}`, function(err, results){
+              if(err) throw err;
+              if (!results[0]) return interaction.reply({ content: "No data found by this user." , ephemeral : true});
+              let SteamId = `${results[0].SteamId}`
+              get_steam(SteamId)
+            });
+        }
+        function get_steam(SteamId) {
+            try {
+                connection.query(`SELECT * FROM discordsteamlinks WHERE DiscordId = ${target.id}`, async function (err, result) {
                     if (err) throw err;
                     if (!result[0]) return interaction.reply({ content: "No data found by this user." , ephemeral : true});
                     try {
@@ -36,11 +38,11 @@ module.exports = {
                             steamUser: "http://api.steampowered.com/ISteamUser",
                             playerService: "http://api.steampowered.com/IPlayerService"
                         }
-                        const getPlayer = await fetch(`${links.steamUser}/GetPlayerSummaries/v0002/?key=${steamapi_key}&steamids=${result[0].SteamId}`).then(res => res.json()).then(json => json['response']);
-                        const getOwned = await fetch(`${links.playerService}/GetOwnedGames/v0001/?key=${steamapi_key}&steamid=${result[0].SteamId}&format=json`).then(res => res.json()).then(json => json['response']);
-                        const getFriends = await fetch(`${links.steamUser}/GetFriendList/v0001/?key=${steamapi_key}&steamid=${result[0].SteamId}&relationship=friend`).then(res => res.json()).then(json => json);
-                        const getbans = await fetch(`${links.steamUser}/GetPlayerBans/v0001/?key=${steamapi_key}&steamids=${result[0].SteamId}`).then(res => res.json()).then(json => json['players']['0']);
-                        const badges = await fetch(`${links.playerService}/GetBadges/v0001/?key=${steamapi_key}&steamid=${result[0].SteamId}&format=json`).then(res => res.json()).then(json => json['response']);
+                        const getPlayer = await fetch(`${links.steamUser}/GetPlayerSummaries/v0002/?key=${steamapi_key}&steamids=${SteamId}`).then(res => res.json()).then(json => json['response']);
+                        const getOwned = await fetch(`${links.playerService}/GetOwnedGames/v0001/?key=${steamapi_key}&steamid=${SteamId}&format=json`).then(res => res.json()).then(json => json['response']);
+                        const getFriends = await fetch(`${links.steamUser}/GetFriendList/v0001/?key=${steamapi_key}&steamid=${SteamId}&relationship=friend`).then(res => res.json()).then(json => json);
+                        const getbans = await fetch(`${links.steamUser}/GetPlayerBans/v0001/?key=${steamapi_key}&steamids=${SteamId}`).then(res => res.json()).then(json => json['players']['0']);
+                        const badges = await fetch(`${links.playerService}/GetBadges/v0001/?key=${steamapi_key}&steamid=${SteamId}&format=json`).then(res => res.json()).then(json => json['response']);
 
                         const a = getPlayer['players']['0']['timecreated'] * 1000;
                         const format = {
@@ -104,8 +106,10 @@ module.exports = {
                         interaction.reply({ content: 'could not fetch this steam user', ephemeral: true });
                     }
                 });  
-        } catch (error) {
+            } catch (error) {
             throw error
+            }
         }
+        get_steamid();
     },
 };
