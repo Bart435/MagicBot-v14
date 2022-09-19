@@ -1,7 +1,5 @@
 const { EmbedBuilder, GuildMember } = require("discord.js");
 
-const WelcomeSetupData = require("../Schemas/WelcomeSetupDB");
-
 module.exports = {
     name: "guildMemberAdd",
     /**
@@ -11,10 +9,7 @@ module.exports = {
     async execute(member) {
         const { user, guild } = member;
 
-        const Data = await WelcomeSetupData.findOne({ GuildID: guild.id });
-        if (!Data) return;
-
-        member.roles.add(`${Data.Role}`).catch((err) => {
+        member.roles.add('956624675511881808').catch((err) => {
             console.log(err);
         });
 
@@ -42,18 +37,18 @@ module.exports = {
             .addFields(
                 {
                     name: "General",
-                    value: `<#${Data.GeneralChannel}>`,
+                    value: `<#551402765377601548>`,
                     inline: true,
                 },
                 {
                     name: "Rules",
-                    value: `<#${Data.RulesChannel}>`,
+                    value: `<#558062972895756308>`,
                     inline: true,
                 }
             );
 
         await guild.channels.cache
-            .get(Data.WelcomeChannel)
+            .get("594936318342201359")
             .send({ embeds: [WelcomeEmbed] });
     },
 };

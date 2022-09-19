@@ -7,8 +7,7 @@ const {
   ChannelType,
   PermissionsBitField
 } = require("discord.js");
-const DB = require("../Schemas/Ticket");
-const TicketSetupData = require("../Schemas/TicketSetup");
+const connection = require('../db/crosschat');
 module.exports = {
   name: "interactionCreate",
   /**
@@ -19,49 +18,47 @@ module.exports = {
     if (!interaction.isButton()) return;
     const { guild, member, customId } = interaction;
 
-    const Data = await TicketSetupData.findOne({ GuildID: guild.id });
-    if (!Data) return;
-
     if (!["Ingame Help", "Giveaway Winner", "Other"].includes(customId)) return;
 
-    if (!Data.IDs)
-      await DB.findOneAndUpdate({ GuildID: guild.id }, { IDs: 0 })
-    const ID = Number(Data.IDs) + 1;
-
+    const sqlQuery = `SELECT COUNT(*) FROM tickets;`
+    const promise = await new Promise((resolve, reject) => {
+      connection.query(sqlQuery, function (err, results) {
+        resolve(results[0])
+      });
+    })
+    let id = (promise['COUNT(*)'])
     await guild.channels
       .create({
-        name: `${customId + "-" + ID}`,
+        name: `${customId + "-" + id.toString()}`,
         type: ChannelType.GuildText,
-        parent: Data.Category,
+        parent: "708421636550033478",
         permissionOverwrites: [
           {
             id: member.id,
             allow: [PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.ReadMessageHistory, PermissionsBitField.Flags.AttachFiles],
           },
           {
-            id: Data.Handlers,
+            id: "551407909674680332",
             allow: [PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.ReadMessageHistory, PermissionsBitField.Flags.AttachFiles],
           },
           {
-            id: Data.Everyone,
+            id: "551402765377601546",
             deny: [PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.ReadMessageHistory, PermissionsBitField.Flags.AttachFiles],
           },
         ],
       })
       .then(async (channel) => {
-        await DB.create({
-          GuildID: guild.id,
-          MembersID: member.id,
-          TicketID: ID,
-          ChannelID: channel.id,
-          Type: customId,
-
-        });
-        await TicketSetupData.findOneAndUpdate({ GuildID: guild.id }, { IDs: ID });
+        const sql = `INSERT INTO tickets (membersID, type, channelID) VALUES ?`;
+        var values = [
+          [member.id, customId, channel.id]
+        ];
+        connection.query(sql, [values], function (err, results) {
+          if (err) throw err;
+        })
 
         const Embed = new EmbedBuilder()
           .setAuthor({
-            name: `${guild.name} | Ticket: ${ID}`,
+            name: `${guild.name} | Ticket: ${id}`,
             iconURL: guild.iconURL({ dynamic: true }),
           })
           .setDescription(
@@ -73,7 +70,7 @@ module.exports = {
         const Buttons = new ActionRowBuilder().addComponents(
           new ButtonBuilder()
             .setCustomId("close")
-            .setLabel("Save & Close Ticket")
+            .setLabel("Close Ticket")
             .setStyle(ButtonStyle.Primary)
             .setEmoji("💾"),
         );

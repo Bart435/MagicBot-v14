@@ -1,6 +1,5 @@
 const { ButtonInteraction } = require("discord.js");
-const DB = require("../Schemas/Ticket");
-const TicketSetupData = require("../Schemas/TicketSetup");
+const connection = require('../db/crosschat');
 
 module.exports = {
   name: "interactionCreate",
@@ -10,28 +9,25 @@ module.exports = {
    */
   async execute(interaction) {
     if (!interaction.isButton()) return;
-    const { guild, customId, channel, member } = interaction;
+    const { customId, channel, member } = interaction;
     if (!["close"].includes(customId)) return;
 
-    const TicketSetup = await TicketSetupData.findOne({ GuildID: guild.id });
-    if (!TicketSetup)
-      return interaction.reply({ content: "The data for this system is outdated." });
 
-    if (!member.roles.cache.find((r) => r.id === TicketSetup.Handlers))
+    if (!member.roles.cache.find((r) => r.id === "551407909674680332"))
       return interaction.reply({ content: "You cannot use these buttons.", ephemeral: true });
 
-    DB.findOne({ ChannelID: channel.id }, async (err, docs) => {
-      if (err) throw err;
-      if (!docs)
-        return interaction.reply({ content: "No data was found related to this ticket, please delete manual.", ephemeral: true, });
-      switch (customId) {
-        case "close":
+    switch (customId) {
+      case "close": {
+        const sqlQuery = `UPDATE tickets SET closed = 1 WHERE channelID = ${channel.id}`;
+        connection.query(sqlQuery, function (err, results) {
+          if (!results) return
           interaction.reply({ content: "This channel will be closed in a couple seconds." });
           setTimeout(() => {
             channel.delete();
           }, 15 * 1000);
-          break;
+        });
       }
-    });
+        break;
+    }
   },
 };
