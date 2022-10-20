@@ -7,7 +7,7 @@ const {
     ButtonBuilder,
     ButtonStyle
 } = require("discord.js");
-
+const connection = require('../../db/timerDB'); 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("utility")
@@ -30,8 +30,7 @@ module.exports = {
                 .setName('wipe')
                 .setDescription('wipe embed')
                 .addStringOption(option => option.setName('last').setDescription('Last wipe date').setRequired(true))
-                .addStringOption(option => option.setName('upcoming').setDescription('upcoming wipe date').setRequired(true))
-                .addChannelOption(option => option.setName('wipechannel').setDescription('select the channel you want the embed to be send in').setRequired(true))
+                .addStringOption(option => option.setName('upcoming').setDescription('data type : mm/dd/yy hh/mm/ss').setRequired(true))
         )
         .addSubcommand(subcommand =>
             subcommand
@@ -105,7 +104,7 @@ module.exports = {
                             .setDescription('List of the mods you will require to join our servers\n\nThis channel is still work in progress.')
                             .setColor('#8a2be2')
                             .addFields(
-                                { name: '‎‎‏', value: 'You can download the mods by visiting the Mod page. [click here](https://steamcommunity.com/sharedfiles/filedetails/?id=1857005993) to go to the mod list directly.' },
+                                { name: '‎‎‏', value: 'You can download the mods by visiting the Mod page. [click here](https://steamcommunity.com/sharedfiles/filedetails/?id=2870396732) to go to the mod list directly.' },
                                 { name: '‎‎‏', value: 'Server settings can be found on the magicark website [click here](https://magicark.co.uk/) to get to the website' })
                             .setImage('https://cdn.discordapp.com/attachments/426029113816514560/944290262551785592/magic_ark_750x537.png')
                         channel.send({ embeds: [mods] })
@@ -115,26 +114,26 @@ module.exports = {
                 }
             }
                 break;
-            case "wipe": {
-                const last = interaction.options.getString("last");
-                const upcoming = interaction.options.getString("upcoming")
-                const channel = interaction.options.getChannel('wipechannel')
-
-                const embed = new EmbedBuilder()
-                    .setTitle('**Wipe**')
-                    .setColor('#8a2be2')
-                    .setTimestamp()
-                    .addFields(
-                        { name: 'Last wipe :', value: `${last}` },
-                        { name: 'Upcoming wipe :', value: `${upcoming}` });
-
-                interaction.reply({ content: "Embed has been send", ephemeral: true })
-
-                const message = await channel.send({ embeds: [embed], fetchReply: true })
-                message.react("✅")
-                message.react("🎉")
-            }
-                break;
+                case "wipe": {
+                    const last = interaction.options.getString("last");
+                    const upcoming = interaction.options.getString("upcoming")
+                    const sqlQuery = `SELECT * FROM timer`
+                    connection.query(sqlQuery, function (err, results) {
+                        if (err) console.error(err)
+                        let channelID = results[0].channelID
+                        if (!channelID) interaction.reply({ content: "channelID not defined", ephemeral: true })
+                        if (channelID) setWipeDate(channelID)
+                    });
+                    function setWipeDate(channelID) {
+                        const sqlQuery = `UPDATE timer SET dateValue = ${JSON.stringify(upcoming)}, lastWipe = ${JSON.stringify(last)}, addedBy = ${JSON.stringify(interaction.user.id)} WHERE channelID = ${channelID}`
+                        connection.query(sqlQuery, function (err, results) {
+                            if (err) console.error(err)
+                            if (!results) console.error("date not succesfully changed")
+                            interaction.reply({ content: "Timer has been confirmed", ephemeral: true })
+                        })
+                    }
+                }
+                    break;
             case "ticket": {
                 const { guild, channel } = interaction;
                 const Buttons = new ActionRowBuilder().addComponents(
