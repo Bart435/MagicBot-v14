@@ -1,16 +1,14 @@
 {
-    "token": "",
-    "Database": "",
-    "steamapi_key": "",
-    "ArkShopPath": "",
-    "PermissionsPath": "",
-    "VerifiedRoleID": "",
-    "CrossDB": 
-      {
-        "host": "",
-        "user": "",
-        "password": "",
-        "database": "",
-        "port" : ""
-      }
-  }
+  "token": "",
+  "Database": "",
+  "steamapi_key": "",
+  "ArkShopPath": "",
+  "PermissionsPath": "",
+  "mysqlDB":
+    {
+      "host": "",
+      "user": "",
+      "password": "",
+      "port" : ""
+    }
+}
